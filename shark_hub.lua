@@ -70,7 +70,7 @@ for _, link in pairs(links) do
     local btn = Instance.new("TextButton")
     btn.Parent = scroll
     btn.Size = UDim2.new(1, -10, 0, 35)
-    btn.Text = " ⇢ " .. link[1]
+    btn.Text = " ▶ " .. link[1]
     btn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
     btn.TextColor3 = Color3.fromRGB(255, 215, 0)
     btn.TextSize = 18
