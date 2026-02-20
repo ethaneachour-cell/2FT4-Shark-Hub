@@ -59,7 +59,8 @@ local links = {
     {"VOID HUB V2", "https://pastefy.app/LxjM1AJD/raw"},
     {"MEW HUB", "https://api.luarmor.net/files/v3/loaders/f6e40e83490bff819d3a3eabd8937a4b.lua"},
     {"CRY HUB", "https://gist.githubusercontent.com/ccryxn-gif/837d10fa9d25f0e2c0db02ff721d8ba7/raw/082240dc9eccb737f8645fdcf5a8cc65adae3115/gistfile1.txt"},
-    {"ARCEUS HUB V2", "https://pastebin.com/raw/ZRD8JEdr"},
+    {"ARCEUS HUB V2", "https://pastebin.com/raw/ZRD8JEdr"}
+    {"ice hub", "loadstring(game:HttpGet("https://api.luarmor.net/files/v3/loaders/a305d4fe821c1e02b8fdb34aa06c7408.lua"))()} ,
 }
 
 for _, link in pairs(links) do
