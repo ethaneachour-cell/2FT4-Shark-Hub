@@ -16,7 +16,7 @@ logo.Font = Enum.Font.GothamBlack
 logo.TextColor3 = Color3.fromRGB(255, 215, 0)
 logo.BorderSizePixel = 0
 
--- WINDOW
+-- Fenêtre
 local win = Instance.new("Frame")
 win.Parent = sg
 win.Size = UDim2.new(0, 350, 0, 500)
@@ -29,6 +29,7 @@ scroll.Parent = win
 scroll.Size = UDim2.new(1, 0, 1, 0)
 scroll.BackgroundTransparency = 1
 scroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+scroll.ScrollBarThickness = 5
 
 local list = Instance.new("UIListLayout")
 list.Parent = scroll
@@ -59,20 +60,20 @@ local links = {
     {"VOID HUB V2", "https://pastefy.app/LxjM1AJD/raw"},
     {"MEW HUB", "https://api.luarmor.net/files/v3/loaders/f6e40e83490bff819d3a3eabd8937a4b.lua"},
     {"CRY HUB", "https://gist.githubusercontent.com/ccryxn-gif/837d10fa9d25f0e2c0db02ff721d8ba7/raw/082240dc9eccb737f8645fdcf5a8cc65adae3115/gistfile1.txt"},
-    {"ARCEUS HUB V2", "https://pastebin.com/raw/ZRD8JEdr"}
-    {"ice hub", "loadstring(game:HttpGet("https://api.luarmor.net/files/v3/loaders/a305d4fe821c1e02b8fdb34aa06c7408.lua"))()} ,
+    {"ARCEUS HUB V2", "https://pastebin.com/raw/ZRD8JEdr"},
+    {"ICE HUB", "https://api.luarmor.net/files/v3/loaders/a305d4fe821c1e02b8fdb34aa06c7408.lua"}
 }
 
 for _, link in pairs(links) do
     local btn = Instance.new("TextButton")
     btn.Parent = scroll
     btn.Size = UDim2.new(1, -10, 0, 35)
-    btn.Text = "▶ " .. link[1]
+    btn.Text = " ▶ " .. link[1]
     btn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
     btn.TextColor3 = Color3.fromRGB(255, 215, 0)
-    btn.TextScaled = true
+    btn.TextSize = 18
     btn.TextXAlignment = Enum.TextXAlignment.Left
-    btn.Font = Enum.Font.Gotham
+    btn.Font = Enum.Font.GothamMedium
     
     btn.MouseButton1Click:Connect(function()
         pcall(function()
