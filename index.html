@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>connexion établie</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=VT323&family=Cormorant+Garamond:ital,wght@0,400;1,500;1,600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --void:#05070a;
+    --term-green:#3dff88;
+    --term-green-dim:#155c33;
+    --term-amber:#ffb020;
+    --heart-red:#e0223f;
+    --heart-glow:#ff5e73;
+    --flame-y:#ffd23d;
+    --flame-o:#ff7a18;
+    --flame-r:#e0223f;
+    --cream:#f4ede2;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{
+    width:100%; height:100%;
+    background:var(--void);
+    overflow:hidden;
+    font-family:'JetBrains Mono', monospace;
+  }
+  #stage{position:fixed; inset:0; width:100%; height:100%;}
+
+  .crt-overlay{
+    position:fixed; inset:0; pointer-events:none; z-index:50; mix-blend-mode:overlay;
+    background:repeating-linear-gradient(
+      to bottom,
+      rgba(255,255,255,0.03) 0px,
+      rgba(255,255,255,0.03) 1px,
+      transparent 2px,
+      transparent 3px
+    );
+  }
+  .vignette{
+    position:fixed; inset:0; pointer-events:none; z-index:51;
+    box-shadow: inset 0 0 18vw 2vw rgba(0,0,0,0.85);
+  }
+  .flicker{ animation: flicker 6.5s infinite; }
+  @keyframes flicker{
+    0%,100%{opacity:1;} 92%{opacity:1;} 93%{opacity:.86;} 94%{opacity:1;} 96%{opacity:.92;} 97%{opacity:1;}
+  }
+
+  .credit{
+    position:fixed; right:14px; bottom:10px; z-index:60;
+    font-family:'JetBrains Mono', monospace; font-size:10px;
+    letter-spacing:1.5px; text-transform:uppercase;
+    color:rgba(255,255,255,0.28);
+    pointer-events:none;
+  }
+
+  /* ================= PHASE 1 : TERMINAL ================= */
+  .phase{
+    position:absolute; inset:0;
+    display:flex; align-items:center; justify-content:center;
+    opacity:0; visibility:hidden; pointer-events:none;
+    transition:opacity .6s ease;
+  }
+  .phase.active{ opacity:1; visibility:visible; pointer-events:auto; }
+
+  #terminal-phase{ background:radial-gradient(ellipse at 50% 40%, #0a1a10 0%, var(--void) 72%); }
+  .term-window{
+    width:min(680px, 92vw);
+    height:min(560px, 80vh);
+    border:1px solid var(--term-green-dim);
+    border-radius:6px;
+    background:rgba(4,10,6,0.9);
+    box-shadow:0 0 40px rgba(61,255,136,0.08), inset 0 0 60px rgba(0,0,0,0.6);
+    display:flex; flex-direction:column;
+    overflow:hidden;
+  }
+  .term-titlebar{
+    padding:8px 14px; font-size:12px; color:var(--term-green-dim);
+    border-bottom:1px solid var(--term-green-dim);
+    letter-spacing:1px; display:flex; justify-content:space-between;
+  }
+  .term-body{
+    flex:1; padding:18px 20px; overflow-y:auto;
+    color:var(--term-green); font-size:15px; line-height:1.65;
+    text-shadow:0 0 6px rgba(61,255,136,0.45);
+  }
+  .term-body::-webkit-scrollbar{ width:0; }
+  .term-line{ white-space:pre-wrap; word-break:break-word; }
+  .term-line.echo{ color:var(--term-green-dim); }
+  .term-line.sys{ color:var(--term-green); }
+  .term-line.warn{ color:var(--term-amber); }
+  .term-inputrow{
+    display:flex; align-items:center; gap:8px;
+    border-top:1px solid var(--term-green-dim);
+    padding:10px 20px;
+  }
+  .prompt-caret{ color:var(--term-green); }
+  #term-input{
+    flex:1; background:transparent; border:none; outline:none;
+    color:var(--term-green); font-family:'JetBrains Mono', monospace;
+    font-size:15px; text-shadow:0 0 6px rgba(61,255,136,0.45);
+    caret-color:var(--term-green);
+  }
+
+  #terminal-phase.zoom-out .term-window{
+    animation:zoomOutTerm 1.1s cubic-bezier(.6,0,.35,1) forwards;
+  }
+  @keyframes zoomOutTerm{
+    0%{ transform:scale(1); filter:blur(0px); opacity:1; }
+    60%{ filter:blur(2px); }
+    100%{ transform:scale(0.15); filter:blur(10px); opacity:0; }
+  }
+
+  /* ================= PHASE 2 : question de transition (clean, sans effet CRT) ================= */
+  #glitch-phase{
+    background:radial-gradient(ellipse at 50% 45%, #0a1a10 0%, var(--void) 75%);
+    flex-direction:column; gap:38px;
+  }
+  #glitch-phase.enter .glitch-text,
+  #glitch-phase.enter .glitch-sub,
+  #glitch-phase.enter .glitch-choices{
+    animation:softFadeIn 1s ease forwards;
+  }
+  #glitch-phase.enter .glitch-sub{ animation-delay:0s; }
+  #glitch-phase.enter .glitch-text{ animation-delay:.15s; }
+  #glitch-phase.enter .glitch-choices{ animation-delay:.45s; }
+  .glitch-text, .glitch-sub, .glitch-choices{ opacity:0; }
+  @keyframes softFadeIn{
+    0%{ opacity:0; transform:translateY(10px); }
+    100%{ opacity:1; transform:translateY(0); }
+  }
+  .glitch-text{
+    font-family:'JetBrains Mono', monospace;
+    font-weight:500;
+    font-size:clamp(22px, 4.6vw, 36px);
+    color:var(--term-green);
+    letter-spacing:1px;
+    text-align:center;
+    padding:0 20px;
+    text-shadow:0 0 18px rgba(61,255,136,.35);
+  }
+  .glitch-sub{
+    font-family:'JetBrains Mono', monospace;
+    font-size:12px; color:var(--term-green-dim);
+    letter-spacing:3px; text-transform:uppercase;
+  }
+  .glitch-choices{ display:flex; gap:20px; }
+  .choice-btn{
+    font-family:'JetBrains Mono', monospace; font-size:15px; font-weight:500;
+    background:transparent; color:var(--term-green);
+    border:1px solid var(--term-green-dim); border-radius:4px;
+    padding:10px 30px; cursor:pointer; letter-spacing:2px;
+    transition:.2s;
+  }
+  .choice-btn:hover{ background:var(--term-green); color:#031006; box-shadow:0 0 18px rgba(61,255,136,.5); }
+
+  #glitch-phase.slide-up{ animation:slideBlurUp .9s cubic-bezier(.6,0,.3,1) forwards; }
+  @keyframes slideBlurUp{
+    0%{ transform:translateY(0); filter:blur(0); opacity:1; }
+    100%{ transform:translateY(-60px); filter:blur(14px); opacity:0; }
+  }
+
+  /* ================= PHASE 3 : HEART EN FEU ================= */
+  #heart-phase{
+    background:radial-gradient(ellipse at 50% 60%, #1a0705 0%, #05070a 72%);
+    flex-direction:column; gap:26px;
+  }
+  #heart-phase.enter{ animation:riseIn 1.1s cubic-bezier(.2,.9,.3,1) forwards; }
+  @keyframes riseIn{
+    0%{ transform:translateY(40px); filter:blur(10px); opacity:0; }
+    100%{ transform:translateY(0); filter:blur(0); opacity:1; }
+  }
+  .heart-wrap{
+    position:relative;
+    width:min(300px, 62vw); aspect-ratio:1/0.95;
+    display:flex; align-items:center; justify-content:center;
+  }
+  #heart-svg{ width:100%; height:100%; overflow:visible; }
+  .heart-path{
+    fill:none;
+    stroke:var(--flame-y);
+    stroke-width:1.4;
+    stroke-linejoin:round;
+    stroke-dasharray:400;
+    stroke-dashoffset:400;
+    filter:drop-shadow(0 0 8px rgba(255,122,24,.75));
+  }
+  .flame-blob{
+    filter:blur(4px);
+    opacity:0;
+    transform-origin:center bottom;
+    mix-blend-mode:screen;
+  }
+  .heart-glow-pulse{
+    animation:heartPulse 1.6s ease-in-out infinite;
+  }
+  @keyframes heartPulse{
+    0%,100%{ filter:drop-shadow(0 0 18px rgba(255,122,24,.55)) drop-shadow(0 0 40px rgba(224,34,63,.35)); }
+    50%{ filter:drop-shadow(0 0 30px rgba(255,180,60,.8)) drop-shadow(0 0 55px rgba(224,34,63,.5)); }
+  }
+  .ember{
+    position:absolute; bottom:6%; border-radius:50%;
+    background:radial-gradient(circle, #ffe9a8 0%, #ff7a18 55%, transparent 75%);
+    opacity:0; pointer-events:none;
+    animation:emberRise linear infinite;
+  }
+  @keyframes emberRise{
+    0%{ transform:translate(0,0) scale(1); opacity:0; }
+    10%{ opacity:.9; }
+    100%{ transform:translate(var(--drift,10px), -160px) scale(.2); opacity:0; }
+  }
+  .heart-mask-reveal{ clip-path: inset(100% 0 0 0); }
+
+  .heart-final-text{
+    font-family:'Cormorant Garamond', serif;
+    font-style:italic;
+    font-weight:500;
+    font-size:clamp(18px, 3.4vw, 26px);
+    color:var(--cream);
+    text-align:center;
+    max-width:70vw;
+    opacity:0;
+    text-shadow:0 0 14px rgba(255,255,255,.15);
+  }
+  .contacts{
+    display:flex; flex-wrap:wrap; justify-content:center; gap:12px;
+    opacity:0;
+  }
+  .contact-btn{
+    display:flex; align-items:center; gap:8px;
+    font-family:'JetBrains Mono', monospace;
+    font-size:13px; letter-spacing:.5px;
+    color:var(--flame-y);
+    background:rgba(224,34,63,0.08);
+    border:1px solid rgba(255,122,24,0.4);
+    border-radius:999px;
+    padding:10px 18px;
+    cursor:pointer;
+    text-decoration:none;
+    transition:.2s;
+  }
+  .contact-btn:hover{
+    background:rgba(255,122,24,0.18);
+    box-shadow:0 0 18px rgba(255,122,24,.35);
+    transform:translateY(-1px);
+  }
+  .contact-btn .ico{ font-size:15px; line-height:1; }
+
+  .toast{
+    position:fixed; left:50%; bottom:8%; transform:translate(-50%, 20px);
+    background:rgba(10,6,6,0.92); color:var(--flame-y);
+    border:1px solid rgba(255,122,24,.4);
+    padding:10px 18px; border-radius:8px;
+    font-family:'JetBrains Mono', monospace; font-size:12px;
+    opacity:0; pointer-events:none; z-index:80;
+    transition:opacity .25s ease, transform .25s ease;
+  }
+  .toast.show{ opacity:1; transform:translate(-50%, 0); }
+
+  .fade-in-up{ animation:fadeInUp 1.1s ease forwards; }
+  @keyframes fadeInUp{
+    0%{ opacity:0; transform:translateY(14px); }
+    100%{ opacity:1; transform:translateY(0); }
+  }
+
+  @media (max-width:480px){
+    .term-window{ height:min(520px, 78vh); }
+    .glitch-choices{ flex-direction:column; align-items:center; }
+    .contacts{ flex-direction:column; align-items:center; }
+  }
+</style>
+</head>
+<body>
+
+<div id="stage">
+
+  <!-- PHASE 1 — TERMINAL -->
+  <section class="phase active" id="terminal-phase">
+    <div class="term-window flicker">
+      <div class="term-titlebar">
+        <span>root@coeur — session sécurisée</span>
+        <span id="term-clock">●&nbsp;&nbsp;connecté</span>
+      </div>
+      <div class="term-body" id="term-body"></div>
+      <div class="term-inputrow">
+        <span class="prompt-caret">&gt;</span>
+        <input id="term-input" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="tapez oui / non puis Entrée">
+      </div>
+    </div>
+  </section>
+
+  <!-- PHASE 2 — question de transition -->
+  <section class="phase" id="glitch-phase">
+    <div class="glitch-sub">signal stabilisé — reine détectée</div>
+    <div class="glitch-text" id="glitch-text">êtes-vous prête, chère reine ?</div>
+    <div class="glitch-choices">
+      <button class="choice-btn" id="glitch-oui">oui</button>
+      <button class="choice-btn" id="glitch-non">non</button>
+    </div>
+  </section>
+
+  <!-- PHASE 3 — CŒUR EN FEU -->
+  <section class="phase" id="heart-phase">
+    <div class="heart-wrap" id="heart-wrap">
+      <svg id="heart-svg" viewBox="0 0 100 90">
+        <defs>
+          <clipPath id="heartClip">
+            <path d="M50,86 C18,63 2,42 2,23 C2,8 14,-2 28,-2 C39,-2 47,5 50,16 C53,5 61,-2 72,-2 C86,-2 98,8 98,23 C98,42 82,63 50,86 Z"/>
+          </clipPath>
+          <radialGradient id="fireBase" cx="50%" cy="90%" r="80%">
+            <stop offset="0%" stop-color="#ffe9a8"/>
+            <stop offset="35%" stop-color="var(--flame-y)"/>
+            <stop offset="65%" stop-color="var(--flame-o)"/>
+            <stop offset="100%" stop-color="var(--flame-r)"/>
+          </radialGradient>
+        </defs>
+
+        <g clip-path="url(#heartClip)" id="fire-group" opacity="0">
+          <rect x="0" y="-2" width="100" height="92" fill="url(#fireBase)"/>
+          <ellipse class="flame-blob" cx="30" cy="70" rx="22" ry="34" fill="#ff7a18" style="animation:flameA 2.2s ease-in-out infinite;"/>
+          <ellipse class="flame-blob" cx="65" cy="60" rx="20" ry="30" fill="#ffb020" style="animation:flameB 2.6s ease-in-out infinite .3s;"/>
+          <ellipse class="flame-blob" cx="48" cy="82" rx="26" ry="20" fill="#ffe9a8" style="animation:flameC 1.9s ease-in-out infinite .1s;"/>
+          <ellipse class="flame-blob" cx="50" cy="30" rx="30" ry="26" fill="#e0223f" style="animation:flameD 2.4s ease-in-out infinite .5s; mix-blend-mode:multiply; opacity:.35;"/>
+        </g>
+
+        <path class="heart-path heart-glow-pulse" id="heart-outline"
+          d="M50,86 C18,63 2,42 2,23 C2,8 14,-2 28,-2 C39,-2 47,5 50,16 C53,5 61,-2 72,-2 C86,-2 98,8 98,23 C98,42 82,63 50,86 Z"/>
+      </svg>
+      <div class="embers" id="embers"></div>
+    </div>
+    <p class="heart-final-text" id="final-text">tu vois que j'ai réussi à te charmer&nbsp;? :)</p>
+    <div class="contacts" id="contacts">
+      <a class="contact-btn" id="btn-snap" href="https://www.snapchat.com/add/err.sys" target="_blank" rel="noopener">
+        <span class="ico">👻</span> snap — err.sys
+      </a>
+      <a class="contact-btn" id="btn-tel" href="tel:0766267318">
+        <span class="ico">📞</span> 07 66 26 73 18
+      </a>
+      <button class="contact-btn" id="btn-discord" type="button">
+        <span class="ico">🎮</span> discord — 2ft4.
+      </button>
+    </div>
+  </section>
+
+</div>
+
+<div class="toast" id="toast"></div>
+<div class="crt-overlay"></div>
+<div class="vignette"></div>
+<div class="credit">made by 2ft4.</div>
+
+<style>
+  @keyframes flameA{ 0%,100%{ transform:translateY(0) scaleY(1); opacity:.85;} 50%{ transform:translateY(-6px) scaleY(1.12); opacity:1;} }
+  @keyframes flameB{ 0%,100%{ transform:translateY(0) scaleY(1); opacity:.8;} 50%{ transform:translateY(-9px) scaleY(1.18); opacity:1;} }
+  @keyframes flameC{ 0%,100%{ transform:translateY(0) scaleY(1); opacity:.75;} 50%{ transform:translateY(-4px) scaleY(1.08); opacity:.95;} }
+  @keyframes flameD{ 0%,100%{ transform:translateY(0); opacity:.3;} 50%{ transform:translateY(-5px); opacity:.45;} }
+</style>
+
+<script>
+(function(){
+  "use strict";
+
+  const termBody   = document.getElementById('term-body');
+  const termInput  = document.getElementById('term-input');
+  const termPhase  = document.getElementById('terminal-phase');
+  const glitchPhase= document.getElementById('glitch-phase');
+  const heartPhase = document.getElementById('heart-phase');
+  const toast      = document.getElementById('toast');
+
+  let state = 'q1';
+  let locked = false;
+
+  function normalize(str){
+    return str.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  }
+  function isYes(v){ return ['oui','o','yes','y'].includes(v); }
+  function isNo(v){ return ['non','n','no'].includes(v); }
+  function sleep(ms){ return new Promise(r=>setTimeout(r, ms)); }
+
+  function printLine(text, cls){
+    return new Promise(resolve=>{
+      const line = document.createElement('div');
+      line.className = 'term-line ' + (cls || 'sys');
+      termBody.appendChild(line);
+      let i = 0;
+      const speed = 18;
+      function tick(){
+        line.textContent = text.slice(0, i);
+        termBody.scrollTop = termBody.scrollHeight;
+        i++;
+        if(i <= text.length){ setTimeout(tick, speed); } else { resolve(); }
+      }
+      tick();
+    });
+  }
+  function printEcho(text){
+    const line = document.createElement('div');
+    line.className = 'term-line echo';
+    line.textContent = '> ' + text;
+    termBody.appendChild(line);
+    termBody.scrollTop = termBody.scrollHeight;
+  }
+
+  async function boot(){
+    await printLine('initialisation du protocole... ok', 'sys');
+    await printLine('chiffrement du canal... ok', 'sys');
+    await printLine('— connexion établie —', 'sys');
+    await sleep(300);
+    await askQ1();
+  }
+  async function askQ1(){ state='q1'; await printLine('alors, le moment est venu ?', 'sys'); }
+  async function askQ2(){ state='q2'; await printLine('votre cœur a-t-il assez été charmé ?', 'sys'); }
+  async function askQ3(){ state='q3'; await printLine('accepteriez-vous de devenir + que de simple amie ?', 'sys'); }
+
+  async function handleInput(raw){
+    if(locked) return;
+    const val = normalize(raw);
+    printEcho(raw);
+    termInput.value = '';
+    if(val === 'recommencer'){
+      await printLine('réinitialisation...', 'warn');
+      await sleep(300);
+      await askQ1();
+      return;
+    }
+    if(!isYes(val) && !isNo(val)){
+      await printLine('commande non reconnue. répondez par "oui" ou "non".', 'warn');
+      return;
+    }
+    if(state === 'q1'){
+      if(isYes(val)){ await askQ2(); }
+      else {
+        await printLine("d'accord... le canal reste ouvert quand vous serez prête.", 'warn');
+        await printLine('(tapez "recommencer" pour relancer la connexion)', 'warn');
+        state = 'end';
+      }
+      return;
+    }
+    if(state === 'q2'){
+      if(isYes(val)){ await askQ3(); }
+      else {
+        await printLine("c'est compréhensible, une telle déesse c'est dur à charmer.", 'warn');
+        await printLine('(tapez "recommencer" pour retenter votre chance)', 'warn');
+        state = 'end';
+      }
+      return;
+    }
+    if(state === 'q3'){
+      if(isYes(val)){
+        locked = true;
+        await printLine('signal en cours de stabilisation...', 'sys');
+        await sleep(500);
+        goToGlitchPhase();
+      } else {
+        await printLine('dommage... une prochaine fois, peut-être.', 'warn');
+        await printLine('(tapez "recommencer" pour relancer la connexion)', 'warn');
+        state = 'end';
+      }
+      return;
+    }
+    if(state === 'end'){ await printLine('tapez "recommencer" pour relancer la connexion.', 'warn'); }
+  }
+
+  termInput.addEventListener('keydown', (e)=>{
+    if(e.key === 'Enter' && termInput.value.trim().length){ handleInput(termInput.value); }
+  });
+  termPhase.addEventListener('click', ()=> termInput.focus());
+
+  function goToGlitchPhase(){
+    termPhase.classList.add('zoom-out');
+    setTimeout(()=>{
+      termPhase.classList.remove('active');
+      glitchPhase.classList.add('active','enter');
+    }, 1050);
+  }
+
+  document.getElementById('glitch-oui').addEventListener('click', ()=>{
+    glitchPhase.classList.add('slide-up');
+    setTimeout(()=>{
+      glitchPhase.classList.remove('active','slide-up','enter');
+      heartPhase.classList.add('active','enter');
+      startHeartSequence();
+    }, 850);
+  });
+  document.getElementById('glitch-non').addEventListener('click', ()=>{
+    const sub = document.querySelector('.glitch-sub');
+    sub.textContent = "d'accord, prenez votre temps... rechargez la page quand vous serez prête.";
+  });
+
+  function spawnEmbers(container, count){
+    for(let i=0;i<count;i++){
+      const e = document.createElement('div');
+      e.className = 'ember';
+      const size = 3 + Math.random()*4;
+      e.style.width = size+'px';
+      e.style.height = size+'px';
+      e.style.left = (30 + Math.random()*40) + '%';
+      e.style.setProperty('--drift', (Math.random()*40-20)+'px');
+      e.style.animationDuration = (2.2 + Math.random()*1.8)+'s';
+      e.style.animationDelay = (Math.random()*2.5)+'s';
+      container.appendChild(e);
+    }
+  }
+
+  function startHeartSequence(){
+    const wrap = document.getElementById('heart-wrap');
+    const outline = document.getElementById('heart-outline');
+    const fireGroup = document.getElementById('fire-group');
+    const finalText = document.getElementById('final-text');
+    const contacts = document.getElementById('contacts');
+    const embers = document.getElementById('embers');
+
+    spawnEmbers(embers, 14);
+
+    const len = outline.getTotalLength();
+    outline.style.strokeDasharray = len;
+    outline.style.strokeDashoffset = len;
+
+    wrap.classList.add('heart-mask-reveal');
+    wrap.style.transition = 'clip-path 1.6s cubic-bezier(.3,.8,.3,1), opacity 1.6s ease';
+    wrap.style.opacity = '0';
+    requestAnimationFrame(()=>{
+      setTimeout(()=>{
+        wrap.style.clipPath = 'inset(0% 0 0 0)';
+        wrap.style.opacity = '1';
+      }, 150);
+    });
+
+    setTimeout(()=>{
+      outline.style.transition = 'stroke-dashoffset 1.8s cubic-bezier(.4,.1,.2,1)';
+      outline.style.strokeDashoffset = '0';
+    }, 300);
+
+    setTimeout(()=>{
+      fireGroup.style.transition = 'opacity 1.2s ease';
+      fireGroup.style.opacity = '1';
+    }, 1900);
+
+    setTimeout(()=>{
+      finalText.style.opacity = '1';
+      finalText.classList.add('fade-in-up');
+    }, 2700);
+    setTimeout(()=>{
+      contacts.style.opacity = '1';
+      contacts.classList.add('fade-in-up');
+    }, 3300);
+  }
+
+  function showToast(msg){
+    toast.textContent = msg;
+    toast.classList.add('show');
+    setTimeout(()=> toast.classList.remove('show'), 2200);
+  }
+
+  document.getElementById('btn-discord').addEventListener('click', ()=>{
+    const handle = '2ft4.';
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(handle).then(()=> showToast('pseudo discord copié : ' + handle));
+    } else {
+      showToast('pseudo discord : ' + handle);
+    }
+  });
+
+  boot();
+})();
+</script>
+</body>
+</html>
